@@ -1,0 +1,64 @@
+# ============================================================
+#  PawCation — Monorepo .gitignore
+# ============================================================
+
+# ---- Secrets (JANGAN pernah commit) ----
+**/.env
+**/.env.*
+!**/.env.example
+
+# ---- Dataset besar (792 MB) — bukan source code, di-regenerate/di-download terpisah ----
+PawCation-AI/Pet_Breeds/
+
+# ---- Python (AI service) ----
+**/__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.pytest_cache/
+venv/
+.venv/
+env/
+
+# ---- PHP / Laravel (Backend) ----
+PawCation-BE/vendor/
+PawCation-BE/node_modules/
+PawCation-BE/storage/*.key
+PawCation-BE/storage/logs/*.log
+PawCation-BE/storage/framework/cache/*
+PawCation-BE/storage/framework/sessions/*
+PawCation-BE/storage/framework/views/*
+PawCation-BE/bootstrap/cache/*.php
+PawCation-BE/public/storage
+
+# ---- Node / Vite (Frontend) ----
+PawCation-FE/node_modules/
+PawCation-FE/dist/
+PawCation-FE/.vite/
+*.local
+vite_restart.log
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ---- AI tooling artifacts (jangan sampai ke-push ke repo portofolio) ----
+.kiro/
+.claude/
+.cursor/
+.aider*
+.continue/
+.windsurf/
+.github/copilot*
+**/CLAUDE.md
+**/AGENTS.md
+**/GEMINI.md
+**/.clinerules

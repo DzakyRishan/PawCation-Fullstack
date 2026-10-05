@@ -1,0 +1,23 @@
+# Secrets — JANGAN pernah commit API key
+.env
+.env.*
+!.env.example
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments (kalau nanti bikin venv lokal)
+venv/
+.venv/
+env/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+
+# Catatan: model .h5 SENGAJA TIDAK di-ignore (ikut ke git, sesuai Opsi 1)
