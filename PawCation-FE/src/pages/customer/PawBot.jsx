@@ -2,9 +2,15 @@ import { useState, useRef, useEffect } from 'react'
 
 const FLASK_URL = 'http://localhost:5000/chat'
 
-function PawBot() {
+// Chat disimpan per tab (sessionStorage): tetap ada saat pindah halaman / refresh,
+// hilang saat tab web ditutup atau saat logout.
+const CHAT_KEY = 'pawbot_chat'
+
+// Isi chat PawBot, dipakai di halaman /pawbot dan di pop-up melayang.
+export function PawBotChat({ className = 'h-[550px] border border-slate-200 rounded-xl p-6' }) {
 const [messages, setMessages] = useState(() => {
-  const saved = localStorage.getItem('pawbot_chat')
+  localStorage.removeItem(CHAT_KEY) // bersihkan sisa versi lama yang tersimpan permanen
+  const saved = sessionStorage.getItem(CHAT_KEY)
   if (saved) {
     try {
       return JSON.parse(saved)
@@ -31,7 +37,7 @@ const [messages, setMessages] = useState(() => {
   }, [messages, loading])
 
   useEffect(() => {
-  localStorage.setItem('pawbot_chat', JSON.stringify(messages))
+  sessionStorage.setItem(CHAT_KEY, JSON.stringify(messages))
 }, [messages])
 
   const handlePhotoChange = (e) => {
@@ -89,7 +95,7 @@ const [messages, setMessages] = useState(() => {
       } else {
         setMessages((prev) => [...prev, { sender: 'bot', text: data.jawaban }])
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { sender: 'bot', text: '⚠️ Gagal terhubung ke server PawBot. Pastikan server Flask sedang berjalan.' },
@@ -107,12 +113,7 @@ const [messages, setMessages] = useState(() => {
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-blue-900 mb-1">PawBot AI</h1>
-      <p className="text-slate-500 mb-6">Asisten AI untuk konsultasi kesehatan hewanmu, kapan saja.</p>
-
-      {/* Chat Window */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 h-[550px] flex flex-col">
+      <div className={`bg-white flex flex-col ${className}`}>
         <div className="flex-1 overflow-y-auto space-y-4">
           {messages.map((msg, idx) =>
             msg.sender === 'bot' ? (
@@ -202,6 +203,15 @@ const [messages, setMessages] = useState(() => {
           </button>
         </div>
       </div>
+  )
+}
+
+function PawBot() {
+  return (
+    <div className="p-8 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold text-blue-900 mb-1">PawBot AI</h1>
+      <p className="text-slate-500 mb-6">Asisten AI untuk konsultasi kesehatan hewanmu, kapan saja.</p>
+      <PawBotChat />
     </div>
   )
 }

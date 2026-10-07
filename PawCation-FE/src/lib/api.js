@@ -26,6 +26,7 @@ export async function apiFetch(path, options = {}) {
     if (res.status === 401 && !path.startsWith('/login') && !path.startsWith('/register')) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      sessionStorage.removeItem('pawbot_chat')
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
         window.location.href = '/login'
       }

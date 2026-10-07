@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
+import PawBotWidget from './components/PawBotWidget'
 
 const Home = lazy(() => import('./pages/customer/Home'))
 const Shop = lazy(() => import('./pages/customer/Shop'))
@@ -44,10 +45,15 @@ function App() {
 function AppContent() {
   const location = useLocation()
   const hideNavbar = location.pathname === '/login' || location.pathname === '/register'
+  // Bubble PawBot hanya di halaman customer (bukan login, admin, owner, atau halaman /pawbot itu sendiri)
+  const showPawBot =
+    !hideNavbar &&
+    !['/admin', '/owner', '/pawbot'].some((p) => location.pathname.startsWith(p))
 
   return (
     <>
       {!hideNavbar && <Navbar />}
+      {showPawBot && <PawBotWidget />}
       <Suspense fallback={<PageLoader />}>
         <Routes>
         <Route path="/" element={

@@ -114,6 +114,7 @@ function Profile() {
     }
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    sessionStorage.removeItem('pawbot_chat')
     navigate('/login')
   }
 
