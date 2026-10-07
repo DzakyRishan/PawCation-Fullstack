@@ -5,9 +5,9 @@ import PetAvatar from '../../components/PetAvatar'
 import { Link } from 'react-router-dom'
 
 const roomTypes = [
-  { id: 'standard', name: 'Standard', desc: 'AC, tempat tidur, mainan', price: 100000, emoji: '🛏️' },
-  { id: 'deluxe', name: 'Deluxe', desc: 'AC, kamera pantau, area main', price: 175000, emoji: '🏡' },
-  { id: 'vip', name: 'VIP', desc: 'Full fasilitas + grooming gratis', price: 250000, emoji: '👑' },
+  { id: 'standard', name: 'Standard', desc: 'AC, tempat tidur, mainan', price: 100000, emoji: '🏠' },
+  { id: 'deluxe', name: 'Deluxe', desc: 'AC, kamera pantau, area main', price: 175000, emoji: '🏨' },
+  { id: 'vip', name: 'VIP', desc: 'Full fasilitas + grooming gratis', price: 250000, emoji: '🏰' },
 ]
 
 const addons = [
