@@ -50,14 +50,7 @@ Full-stack project: **React** frontend · **Laravel** REST API · **Flask + Tens
 | [`PawCation-BE`](PawCation-BE) | Laravel 13 · Sanctum · PostgreSQL | REST API & database |
 | [`PawCation-AI`](PawCation-AI) | Flask · TensorFlow/Keras · Google Gemini | PawBot chat & klasifikasi ras |
 
-## 📸 Screenshots
 
-> _Tambahkan screenshot di sini — mis. simpan ke `docs/` lalu referensikan:_
->
-> `![Home](docs/home.png)` · `![PawBot](docs/pawbot.png)` · `![CCTV](docs/cctv.png)`
-
-<!-- ![Home](docs/home.png) -->
-<!-- ![PawBot AI](docs/pawbot.png) -->
 
 ---
 
