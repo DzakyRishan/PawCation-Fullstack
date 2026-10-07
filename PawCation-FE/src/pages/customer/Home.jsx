@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { API_URL, apiFetch } from '../../lib/api'
 import { formatDate } from '../../lib/format'
+import PetBanner from '../../components/PetBanner'
 
 function Home() {
   const [products, setProducts] = useState([])
@@ -22,23 +23,22 @@ function Home() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <div className="bg-blue-50 rounded-2xl p-10 mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-blue-900 mb-2">
-            Halo, {name}! 🐾
-          </h1>
-          <p className="text-slate-600 mb-4">
-            Titipkan hewan kesayanganmu dengan tenang, belanja kebutuhan mereka,
-            dan pantau langsung lewat CCTV kapan saja.
-          </p>
-          <Link
-            to="/hotel"
-            className="inline-block bg-blue-900 hover:bg-blue-800 text-white font-medium px-5 py-2 rounded-lg"
-          >
-            Booking Sekarang
-          </Link>
-        </div>
-        <div className="text-6xl hidden md:block">🐶🐱</div>
+      <PetBanner />
+
+      <div className="bg-blue-50 rounded-2xl p-8 mb-8">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">
+          Halo, {name}! 🐾
+        </h1>
+        <p className="text-slate-600 mb-4 max-w-2xl">
+          Titipkan hewan kesayanganmu dengan tenang, belanja kebutuhan mereka,
+          dan pantau langsung lewat CCTV kapan saja.
+        </p>
+        <Link
+          to="/hotel"
+          className="inline-block bg-blue-900 hover:bg-blue-800 text-white font-medium px-5 py-2 rounded-lg"
+        >
+          Booking Sekarang
+        </Link>
       </div>
 
       {dashboard && (
@@ -142,12 +142,11 @@ function Home() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
           { to: '/shop', emoji: '🛒', label: 'Supermarket' },
           { to: '/hotel', emoji: '🏨', label: 'Pet Hotel' },
           { to: '/consult', emoji: '🩺', label: 'Booking Kesehatan' },
-          { to: '/pawbot', emoji: '🤖', label: 'PawBot AI' },
           { to: '/cctv', emoji: '📹', label: 'CCTV Live' },
           { to: '/schedule', emoji: '📅', label: 'Jadwal' },
           { to: '/pet-taxi', emoji: '🚕', label: 'Pet Taxi' },
