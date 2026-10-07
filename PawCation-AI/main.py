@@ -20,7 +20,26 @@ load_dotenv(_ENV_PATH, override=True)
 API_KEY = os.getenv('API_KEY')
 if not API_KEY:
     print(f"⚠️  API_KEY kosong! Cek file: {_ENV_PATH}")
-client = genai.Client(api_key=API_KEY)
+client = genai.Client(api_key=API_KEY, http_options=types.HttpOptions(timeout=20000))  # 20 detik per percobaan
+
+# Urutan model cadangan: kalau satu model sedang penuh (503/504/429), coba model berikutnya.
+# Model pertama = yang terbukti responsif; sisanya cadangan. (Uji 2026-10-07: model lain banyak 503/504.)
+GEMINI_MODELS = ['gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3-flash-preview']
+
+# Tebakan ras hanya disebut jika keyakinan model >= nilai ini (persen)
+BATAS_YAKIN_RAS = 60
+
+
+def tanya_gemini(contents):
+    """Kirim ke Gemini dengan fallback model. Melempar error terakhir jika semua gagal."""
+    error_terakhir = None
+    for nama_model in GEMINI_MODELS:
+        try:
+            return client.models.generate_content(model=nama_model, contents=contents)
+        except Exception as e:  # timeout, 503 overload, 504 deadline, 429 kuota, dll
+            print(f"⚠️  Gemini [{nama_model}] gagal: {str(e)[:120]}")
+            error_terakhir = e
+    raise error_terakhir
 
 # --- 1. MUAT OTAK AI KLASIFIKASI (TENSORFLOW) ---
 print("Memuat otak AI Klasifikasi Ras Hewan...")
@@ -87,6 +106,7 @@ def tanya_pawbot():
             aturan_sapaan = "Ini chat LANJUTAN. DILARANG KERAS mengucapkan salam pembuka. Langsung to-the-point!"
 
         info_ras_tambahan = ""
+        ras_yakin = False
         image_bytes = None
         mime_type = 'image/jpeg'
 
@@ -110,8 +130,13 @@ def tanya_pawbot():
                 indeks = np.argmax(predictions[0])
                 ras_tebakan = class_names[indeks].upper()
 
-                # Tambahkan instruksi rahasia ke Gemini
-                info_ras_tambahan = f"\n[INFO SISTEM KLASIFIKASI INTERNAL]: Beritahu user di awal jawaban bahwa sistem mendeteksi ras hewan ini sebagai **{ras_tebakan}** (Keyakinan: {persentase:.2f}%)."
+                # Tambahkan instruksi rahasia ke Gemini — hanya jika model cukup yakin.
+                # Foto close-up (gigi, kulit, luka) bukan foto seluruh badan, jadi tebakan ras sering ngawur.
+                if persentase >= BATAS_YAKIN_RAS:
+                    ras_yakin = True
+                    info_ras_tambahan = f"\n[INFO SISTEM KLASIFIKASI INTERNAL]: Beritahu user di awal jawaban bahwa sistem mendeteksi ras hewan ini sebagai **{ras_tebakan}** (Keyakinan: {persentase:.2f}%)."
+                else:
+                    info_ras_tambahan = "\n[INFO SISTEM KLASIFIKASI INTERNAL]: Sistem klasifikasi ras TIDAK yakin (foto kemungkinan close-up bagian tubuh). JANGAN menyebut ras hewan; fokus menjawab pertanyaan user."
             except Exception as e:
                 print(f"Error saat klasifikasi ras: {e}")
 
@@ -136,30 +161,34 @@ def tanya_pawbot():
         {konteks_user}
         """
 
-        # Kirim ke Gemini
+        # Kirim ke Gemini (dengan fallback model jika server sedang penuh)
         if ada_foto:
-            response = client.models.generate_content(
-                model='gemini-flash-lite-latest',
-                contents=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part(text=prompt_lengkap),
-                            types.Part(
-                                inline_data=types.Blob(
-                                    mime_type=mime_type,
-                                    data=image_bytes
-                                )
+            isi = [
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part(text=prompt_lengkap),
+                        types.Part(
+                            inline_data=types.Blob(
+                                mime_type=mime_type,
+                                data=image_bytes
                             )
-                        ]
-                    )
-                ]
-            )
+                        )
+                    ]
+                )
+            ]
         else:
-            response = client.models.generate_content(
-                model='gemini-flash-lite-latest',
-                contents=prompt_lengkap
-            )
+            isi = prompt_lengkap
+
+        try:
+            response = tanya_gemini(isi)
+        except Exception:
+            pesan = "Maaf, layanan AI sedang sangat sibuk. Coba kirim ulang beberapa saat lagi ya."
+            if ras_yakin and not pertanyaan_user:
+                # User hanya kirim foto tanpa pertanyaan: hasil klasifikasi ras tetap berguna
+                pesan = (f"Sistem mendeteksi ras hewan ini sebagai **{ras_tebakan}** "
+                         f"(keyakinan {persentase:.2f}%).\n\n") + pesan
+            return jsonify({"jawaban": pesan})
 
         return jsonify({"jawaban": response.text})
 
