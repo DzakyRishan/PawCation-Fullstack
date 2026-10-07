@@ -36,6 +36,7 @@ function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50">
       <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm">
+        <img src="/pawcation-logo.png" alt="PawCation" className="h-10 w-auto mx-auto mb-6" />
         <h1 className="text-2xl font-bold text-blue-900 mb-1 text-center">Daftar Akun</h1>
         <p className="text-slate-500 text-sm mb-6 text-center">Bergabung dengan PawCation</p>
 
