@@ -1,31 +1,21 @@
-import { petEmoji } from '../lib/pets'
+import { petImage, petTypeLabel } from '../lib/pets'
 
 const sizeClass = {
-  sm: 'w-10 h-10 text-lg',
-  md: 'w-14 h-14 text-xl',
-  lg: 'w-20 h-20 text-2xl',
+  sm: 'w-10 h-10',
+  md: 'w-14 h-14',
+  lg: 'w-20 h-20',
 }
 
 function PetAvatar({ pet, size = 'md', className = '' }) {
   const box = `${sizeClass[size] || sizeClass.md} shrink-0 rounded-full overflow-hidden ${className}`
-
-  if (pet?.photo_url) {
-    return (
-      <img
-        src={pet.photo_url}
-        alt={pet.name || 'Hewan'}
-        className={`${box} object-cover border border-slate-100`}
-      />
-    )
-  }
+  const src = pet?.photo_url || petImage(pet?.type)
 
   return (
-    <div
-      className={`${box} bg-blue-50 flex items-center justify-center border border-slate-100`}
-      aria-hidden
-    >
-      {petEmoji(pet?.type)}
-    </div>
+    <img
+      src={src}
+      alt={pet?.name || petTypeLabel(pet?.type)}
+      className={`${box} object-cover border border-slate-100`}
+    />
   )
 }
 
