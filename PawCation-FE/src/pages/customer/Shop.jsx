@@ -108,7 +108,15 @@ function Shop() {
     }
   }
 
-  const categories = ['All', 'Cat', 'Dog', 'Fish']
+  const categories = [
+    'All',
+    'Makanan Anjing',
+    'Snack Anjing',
+    'Makanan Kucing',
+    'Snack Kucing',
+    'Mainan',
+    'Perawatan',
+  ]
 
   return (
     <div className="p-8 max-w-6xl mx-auto flex gap-6">
@@ -126,7 +134,7 @@ function Shop() {
           />
         </div>
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {categories.map((cat) => (
             <button
               key={cat}

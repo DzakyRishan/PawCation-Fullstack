@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->decimal('price', 10, 2);
-            $table->enum('category', ['Cat', 'Dog', 'Fish', 'All']);
+            $table->string('category')->default('All');
             $table->string('emoji')->nullable();
             $table->string('photo')->nullable();
             $table->integer('stock')->default(0);

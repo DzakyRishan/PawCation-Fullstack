@@ -13,7 +13,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::query();
+        $query = Product::query()->where('is_active', true);
 
         if ($request->has('category') && $request->category !== 'All') {
             $query->where('category', $request->category);
