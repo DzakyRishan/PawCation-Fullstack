@@ -6,6 +6,16 @@ const FLASK_URL = 'http://localhost:5000/chat'
 // hilang saat tab web ditutup atau saat logout.
 const CHAT_KEY = 'pawbot_chat'
 
+// Ubah **teks** jadi <strong>teks</strong>. Hasil tetap elemen React (bukan HTML mentah), jadi aman dari XSS.
+function renderBold(text) {
+  if (!text) return text
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') && part.length > 4
+      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      : part
+  )
+}
+
 // Isi chat PawBot, dipakai di halaman /pawbot dan di pop-up melayang.
 export function PawBotChat({ className = 'h-[550px] border border-slate-200 rounded-xl p-6' }) {
 const [messages, setMessages] = useState(() => {
@@ -122,7 +132,7 @@ const [messages, setMessages] = useState(() => {
                   🤖
                 </div>
                 <div className="bg-blue-50 text-slate-700 rounded-xl rounded-tl-none px-4 py-2 max-w-sm whitespace-pre-wrap text-sm">
-                  {msg.text}
+                  {renderBold(msg.text)}
                 </div>
               </div>
             ) : (
@@ -180,7 +190,7 @@ const [messages, setMessages] = useState(() => {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="border border-slate-200 hover:border-blue-300 text-slate-500 px-3 py-2 rounded-lg"
+            className="shrink-0 border border-slate-200 hover:border-blue-300 text-slate-500 px-3 py-2 rounded-lg"
             title="Upload foto hewan"
           >
             📷
@@ -192,12 +202,12 @@ const [messages, setMessages] = useState(() => {
             onKeyDown={handleKeyDown}
             placeholder="Tulis pertanyaanmu..."
             disabled={loading}
-            className="flex-1 border border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="flex-1 min-w-0 border border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
           />
           <button
             onClick={handleSend}
             disabled={loading || (!input.trim() && !photo)}
-            className="bg-blue-900 hover:bg-blue-800 disabled:bg-slate-200 disabled:cursor-not-allowed text-white px-5 py-2 rounded-lg font-medium"
+            className="shrink-0 bg-blue-900 hover:bg-blue-800 disabled:bg-slate-200 disabled:cursor-not-allowed text-white px-5 py-2 rounded-lg font-medium"
           >
             Kirim
           </button>

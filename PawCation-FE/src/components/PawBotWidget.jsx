@@ -20,7 +20,7 @@ function PawBotWidget() {
       {/* Pop-up chat (tetap ter-mount setelah dibuka agar chat tidak hilang saat ditutup) */}
       {loaded && (
         <div
-          className={`w-[360px] max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden origin-bottom-right transition-all duration-300 ${
+          className={`w-[440px] max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden origin-bottom-right transition-all duration-300 ${
             open ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
           }`}
           role="dialog"
@@ -43,7 +43,7 @@ function PawBotWidget() {
             </button>
           </div>
           <Suspense fallback={<p className="p-6 text-sm text-slate-400">Memuat PawBot…</p>}>
-            <PawBotChat className="h-[460px] max-h-[65vh] p-4" />
+            <PawBotChat className="h-[560px] max-h-[calc(100vh-11rem)] p-4" />
           </Suspense>
         </div>
       )}
