@@ -50,14 +50,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# ---- AI tooling artifacts (jangan sampai ke-push ke repo portofolio) ----
-.kiro/
-.claude/
-.cursor/
-.aider*
-.continue/
-.windsurf/
-.github/copilot*
+   # Local tooling & editor config
 **/CLAUDE.md
 **/AGENTS.md
 **/GEMINI.md
