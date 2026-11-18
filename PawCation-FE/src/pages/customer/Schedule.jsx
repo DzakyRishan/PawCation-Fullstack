@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiFetch } from '../../lib/api'
+import { apiFetch, cachedGet, peekCache } from '../../lib/api'
 import { formatDate, formatTime } from '../../lib/format'
 
 const hotelStatus = {
@@ -25,18 +25,22 @@ const taxiStatus = {
 }
 
 function Schedule() {
-  const [hotelBookings, setHotelBookings] = useState([])
-  const [consultBookings, setConsultBookings] = useState([])
-  const [taxiTrips, setTaxiTrips] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [hotelBookings, setHotelBookings] = useState(() => peekCache('/hotel-bookings') || [])
+  const [consultBookings, setConsultBookings] = useState(() => peekCache('/consult-bookings') || [])
+  const [taxiTrips, setTaxiTrips] = useState(() => peekCache('/pet-taxi') || [])
+  const [loading, setLoading] = useState(
+    () =>
+      peekCache('/hotel-bookings') === undefined &&
+      peekCache('/consult-bookings') === undefined &&
+      peekCache('/pet-taxi') === undefined
+  )
   const [error, setError] = useState(null)
 
   const load = () => {
-    setLoading(true)
     Promise.all([
-      apiFetch('/hotel-bookings'),
-      apiFetch('/consult-bookings'),
-      apiFetch('/pet-taxi'),
+      cachedGet('/hotel-bookings'),
+      cachedGet('/consult-bookings'),
+      cachedGet('/pet-taxi'),
     ])
       .then(([hotel, consult, taxi]) => {
         setHotelBookings(hotel)

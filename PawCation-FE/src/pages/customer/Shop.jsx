@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { apiFetch, API_URL } from '../../lib/api'
+import { apiFetch, cachedGet, peekCache } from '../../lib/api'
+import { productImage } from '../../lib/images'
 
 const CART_STORAGE_KEY = 'pawcation_cart'
 
@@ -12,9 +13,13 @@ function loadCartFromStorage() {
   }
 }
 
+const normalizeProducts = (data) =>
+  (Array.isArray(data) ? data : []).map((p) => ({ ...p, price: parseFloat(p.price) }))
+
 function Shop() {
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Tampilkan data terakhir dari cache dulu (instan), lalu perbarui di background.
+  const [products, setProducts] = useState(() => normalizeProducts(peekCache('/products')))
+  const [loading, setLoading] = useState(() => peekCache('/products') === undefined)
   const [error, setError] = useState(null)
 
   const [cart, setCart] = useState(loadCartFromStorage)
@@ -28,24 +33,17 @@ function Shop() {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
   }, [cart])
 
-  useEffect(() => {
-    fetch(`${API_URL}/products`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Gagal mengambil data produk')
-        return res.json()
-      })
+  const loadProducts = () =>
+    cachedGet('/products')
       .then((data) => {
-        const normalized = data.map((p) => ({
-          ...p,
-          price: parseFloat(p.price),
-        }))
-        setProducts(normalized)
-        setLoading(false)
+        setProducts(normalizeProducts(data))
+        setError(null)
       })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
+      .catch((err) => setError(err.message || 'Gagal mengambil data produk'))
+      .finally(() => setLoading(false))
+
+  useEffect(() => {
+    loadProducts()
   }, [])
 
   const filteredProducts = products.filter((p) => {
@@ -98,6 +96,7 @@ function Shop() {
         }),
       })
       setCart([])
+      loadProducts() // stok berubah setelah checkout
       setCheckoutMessage(
         `Pesanan #${order.id} berhasil! Total Rp ${parseFloat(order.total_price).toLocaleString('id-ID')}`
       )
@@ -152,25 +151,47 @@ function Shop() {
         </div>
 
         {loading && (
-          <p className="text-slate-400 text-sm text-center py-8">Memuat produk...</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-slate-100" />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 bg-slate-100 rounded w-3/4" />
+                  <div className="h-4 bg-slate-100 rounded w-1/3" />
+                  <div className="h-8 bg-slate-100 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-        {error && (
+        {error && products.length === 0 && (
           <p className="text-rose-500 text-sm text-center py-8">
             Gagal memuat produk: {error}. Pastikan server Laravel berjalan.
           </p>
         )}
 
-        {!loading && !error && (
+        {!loading && products.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition"
+                className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition flex flex-col"
               >
-                <div className="bg-blue-50 h-32 flex items-center justify-center text-4xl">
-                  {product.emoji}
+                <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+                  <img
+                    src={productImage(product)}
+                    alt={product.name}
+                    width="400"
+                    height="300"
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute top-2 left-2 bg-white/90 text-blue-900 text-[11px] font-medium px-2 py-0.5 rounded-full">
+                    {product.category}
+                  </span>
                 </div>
-                <div className="p-4">
+                <div className="p-4 flex flex-col flex-1">
                   <p className="text-sm font-medium text-slate-800 mb-1">{product.name}</p>
                   <p className="text-blue-700 font-semibold mb-1">
                     Rp {product.price.toLocaleString('id-ID')}
@@ -180,7 +201,7 @@ function Shop() {
                     type="button"
                     onClick={() => addToCart(product)}
                     disabled={!product.stock}
-                    className="w-full bg-blue-900 hover:bg-blue-800 text-white text-sm font-medium py-2 rounded-lg disabled:opacity-50"
+                    className="mt-auto w-full bg-blue-900 hover:bg-blue-800 text-white text-sm font-medium py-2 rounded-lg disabled:opacity-50"
                   >
                     + Keranjang
                   </button>
@@ -216,7 +237,15 @@ function Shop() {
               <div className="space-y-3 mb-4 max-h-80 overflow-y-auto">
                 {cart.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                    <div className="text-2xl">{item.emoji}</div>
+                    <img
+                      src={productImage(item)}
+                      alt=""
+                      width="48"
+                      height="48"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-12 h-12 rounded-lg object-cover bg-slate-100 shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-800 truncate">{item.name}</p>
                       <p className="text-xs text-blue-700 font-semibold">

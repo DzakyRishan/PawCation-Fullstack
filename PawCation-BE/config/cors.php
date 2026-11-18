@@ -30,7 +30,9 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    // Browser boleh menyimpan hasil preflight (OPTIONS) selama 2 jam,
+    // jadi tidak ada request OPTIONS tambahan sebelum setiap panggilan API.
+    'max_age' => 7200,
 
     'supports_credentials' => false,
 

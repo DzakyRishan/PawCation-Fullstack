@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { apiFetch } from '../../lib/api'
+import { cachedGet, peekCache } from '../../lib/api'
 import PetAvatar from '../../components/PetAvatar'
 
 function CCTV() {
-  const [sessions, setSessions] = useState([])
-  const [selectedPetName, setSelectedPetName] = useState('Hewan')
+  const [sessions, setSessions] = useState(() => peekCache('/cctv/sessions') || [])
+  const [selectedPetName, setSelectedPetName] = useState(
+    () => peekCache('/cctv/sessions')?.[0]?.pet?.name || 'Hewan'
+  )
   const [heartRate, setHeartRate] = useState(85)
   const [temp, setTemp] = useState(24.0)
   const [activity, setActivity] = useState('Active')
@@ -13,14 +15,14 @@ function CCTV() {
   const nextId = useRef(1)
 
   useEffect(() => {
-    apiFetch('/cctv/sessions')
+    cachedGet('/cctv/sessions')
       .then((data) => {
         setSessions(data)
         if (data[0]?.pet?.name) {
           setSelectedPetName(data[0].pet.name)
         }
       })
-      .catch(() => setSessions([]))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { apiFetch } from '../../lib/api'
+import { apiFetch, cachedGet, peekCache } from '../../lib/api'
 import { petTypeLabel } from '../../lib/pets'
 
 function PetTaxi() {
-  const [pets, setPets] = useState([])
+  const [pets, setPets] = useState(() => peekCache('/pets') || [])
   const [activeTrip, setActiveTrip] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => peekCache('/pets') === undefined)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
@@ -17,7 +17,7 @@ function PetTaxi() {
   })
 
   useEffect(() => {
-    Promise.all([apiFetch('/pets'), apiFetch('/pet-taxi')])
+    Promise.all([cachedGet('/pets'), cachedGet('/pet-taxi')])
       .then(([petList, trips]) => {
         setPets(petList)
         if (petList.length) {

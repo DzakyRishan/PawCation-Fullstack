@@ -1,25 +1,35 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { API_URL, apiFetch } from '../../lib/api'
+import { cachedGet, peekCache } from '../../lib/api'
 import { formatDate } from '../../lib/format'
+import { productImage } from '../../lib/images'
 import PetBanner from '../../components/PetBanner'
 
+const featureCards = [
+  { to: '/shop', label: 'Supermarket', desc: 'Makanan, snack & mainan', image: '/images/products/royal-canin.jpg' },
+  { to: '/hotel', label: 'Pet Hotel', desc: 'Kamar nyaman & aman', image: '/images/rooms/deluxe.jpg' },
+  { to: '/consult', label: 'Booking Kesehatan', desc: 'Konsultasi dokter hewan', image: '/images/health/basic.jpg' },
+  { to: '/cctv', label: 'CCTV Live', desc: 'Pantau anabul 24 jam', image: '/pets/banner-golden.jpg' },
+  { to: '/schedule', label: 'Jadwal', desc: 'Riwayat & jadwal booking', image: '/pets/banner-persian.jpg' },
+  { to: '/pet-taxi', label: 'Pet Taxi', desc: 'Antar-jemput anabul', image: '/images/addons/pet-taxi.jpg' },
+]
+
 function Home() {
-  const [products, setProducts] = useState([])
-  const [dashboard, setDashboard] = useState(null)
+  const [products, setProducts] = useState(() => (peekCache('/products') || []).slice(0, 2))
+  const [dashboard, setDashboard] = useState(() => peekCache('/dashboard') || null)
+  const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
 
   useEffect(() => {
-    fetch(`${API_URL}/products`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setProducts(data.slice(0, 2)))
-      .catch(() => setProducts([]))
+    cachedGet('/products')
+      .then((data) => setProducts(Array.isArray(data) ? data.slice(0, 2) : []))
+      .catch(() => {})
 
-    apiFetch('/dashboard')
+    cachedGet('/dashboard')
       .then(setDashboard)
-      .catch(() => setDashboard(null))
+      .catch(() => {})
   }, [])
 
-  const name = dashboard?.user?.name || 'Pet Parent'
+  const name = dashboard?.user?.name || storedUser?.name || 'Pet Parent'
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -107,12 +117,21 @@ function Home() {
               </p>
             ) : (
               products.map((p) => (
-                <div
+                <Link
                   key={p.id}
-                  className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition"
+                  to="/shop"
+                  className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition block"
                 >
-                  <div className="bg-blue-50 h-32 flex items-center justify-center text-4xl">
-                    {p.emoji}
+                  <div className="aspect-[16/10] bg-slate-100 overflow-hidden">
+                    <img
+                      src={productImage(p)}
+                      alt={p.name}
+                      width="400"
+                      height="250"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
                   </div>
                   <div className="p-4">
                     <p className="text-sm font-medium text-slate-800 mb-1">{p.name}</p>
@@ -120,7 +139,7 @@ function Home() {
                       Rp {parseFloat(p.price).toLocaleString('id-ID')}
                     </p>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
@@ -143,21 +162,25 @@ function Home() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[
-          { to: '/shop', emoji: '🛒', label: 'Supermarket' },
-          { to: '/hotel', emoji: '🏨', label: 'Pet Hotel' },
-          { to: '/consult', emoji: '🩺', label: 'Booking Kesehatan' },
-          { to: '/cctv', emoji: '📹', label: 'CCTV Live' },
-          { to: '/schedule', emoji: '📅', label: 'Jadwal' },
-          { to: '/pet-taxi', emoji: '🚕', label: 'Pet Taxi' },
-        ].map((item) => (
+        {featureCards.map((item) => (
           <Link
             key={item.to}
             to={item.to}
-            className="bg-white border border-slate-200 rounded-xl p-5 text-center hover:shadow-md transition"
+            className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition flex items-center gap-4 p-3"
           >
-            <div className="text-3xl mb-2">{item.emoji}</div>
-            <p className="font-medium text-slate-700">{item.label}</p>
+            <img
+              src={item.image}
+              alt={item.label}
+              width="72"
+              height="72"
+              loading="lazy"
+              decoding="async"
+              className="w-16 h-16 rounded-lg object-cover bg-slate-100 shrink-0 transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="min-w-0">
+              <p className="font-semibold text-slate-800 text-sm">{item.label}</p>
+              <p className="text-xs text-slate-500 truncate">{item.desc}</p>
+            </div>
           </Link>
         ))}
       </div>

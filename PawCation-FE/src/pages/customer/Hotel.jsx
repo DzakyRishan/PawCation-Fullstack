@@ -1,25 +1,47 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../../lib/api'
+import { apiFetch, cachedGet, peekCache } from '../../lib/api'
 import PetAvatar from '../../components/PetAvatar'
 import { Link } from 'react-router-dom'
 
+// Foto contoh (dummy) kamar — ganti dengan foto kamar asli PawCation jika sudah ada.
 const roomTypes = [
-  { id: 'standard', name: 'Standard', desc: 'AC, tempat tidur, mainan', price: 100000, emoji: '🏠' },
-  { id: 'deluxe', name: 'Deluxe', desc: 'AC, kamera pantau, area main', price: 175000, emoji: '🏨' },
-  { id: 'vip', name: 'VIP', desc: 'Full fasilitas + grooming gratis', price: 250000, emoji: '🏰' },
+  {
+    id: 'standard',
+    name: 'Standard',
+    desc: 'AC, tempat tidur, mainan',
+    features: ['AC', 'Kasur empuk', 'Mainan'],
+    price: 100000,
+    image: '/images/rooms/standard.jpg',
+  },
+  {
+    id: 'deluxe',
+    name: 'Deluxe',
+    desc: 'AC, kamera pantau, area main',
+    features: ['AC', 'CCTV 24 jam', 'Area main'],
+    price: 175000,
+    image: '/images/rooms/deluxe.jpg',
+  },
+  {
+    id: 'vip',
+    name: 'VIP',
+    desc: 'Full fasilitas + grooming gratis',
+    features: ['Kamar luas', 'CCTV 24 jam', 'Grooming gratis'],
+    price: 250000,
+    image: '/images/rooms/vip.jpg',
+  },
 ]
 
 const addons = [
-  { id: 'grooming', name: 'Grooming', price: 50000 },
-  { id: 'pettaxi', name: 'Pet Taxi Antar-Jemput', price: 40000 },
-  { id: 'vetcheck', name: 'Vet Check-up', price: 75000 },
+  { id: 'grooming', name: 'Grooming', desc: 'Mandi, potong kuku & sisir bulu', price: 50000, image: '/images/addons/grooming.jpg' },
+  { id: 'pettaxi', name: 'Pet Taxi Antar-Jemput', desc: 'Dijemput & diantar pulang', price: 40000, image: '/images/addons/pet-taxi.jpg' },
+  { id: 'vetcheck', name: 'Vet Check-up', desc: 'Cek kesehatan oleh dokter hewan', price: 75000, image: '/images/addons/vet-check.jpg' },
 ]
 
 function Hotel() {
   const navigate = useNavigate()
-  const [pets, setPets] = useState([])
-  const [petsLoading, setPetsLoading] = useState(true)
+  const [pets, setPets] = useState(() => peekCache('/pets') || [])
+  const [petsLoading, setPetsLoading] = useState(() => peekCache('/pets') === undefined)
   const [petsError, setPetsError] = useState(null)
 
   const [selectedPet, setSelectedPet] = useState(null)
@@ -37,17 +59,11 @@ function Hotel() {
   const [addingPet, setAddingPet] = useState(false)
 
   const loadPets = () => {
-    setPetsLoading(true)
     setPetsError(null)
-    apiFetch('/pets')
-      .then((data) => {
-        setPets(data)
-        setPetsLoading(false)
-      })
-      .catch((err) => {
-        setPetsError(err.message)
-        setPetsLoading(false)
-      })
+    cachedGet('/pets')
+      .then((data) => setPets(data))
+      .catch((err) => setPetsError(err.message))
+      .finally(() => setPetsLoading(false))
   }
 
   useEffect(() => {
@@ -230,31 +246,55 @@ function Hotel() {
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
           <h2 className="font-semibold text-blue-900 mb-4">Pilih Tipe Kamar</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {roomTypes.map((room) => (
-              <button
-                key={room.id}
-                type="button"
-                onClick={() => setSelectedRoom(room)}
-                className={`text-left border rounded-xl overflow-hidden transition ${
-                  selectedRoom?.id === room.id
-                    ? 'border-blue-900 ring-2 ring-blue-100'
-                    : 'border-slate-200 hover:border-blue-300'
-                }`}
-              >
-                <div className="bg-blue-50 h-24 flex items-center justify-center text-3xl">
-                  {room.emoji}
-                </div>
-                <div className="p-3">
-                  <p className="font-semibold text-slate-800 text-sm mb-1">{room.name}</p>
-                  <p className="text-xs text-slate-500 mb-1">{room.desc}</p>
-                  <p className="text-blue-700 font-semibold text-sm">
-                    Rp {room.price.toLocaleString('id-ID')} / malam
-                  </p>
-                </div>
-              </button>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {roomTypes.map((room) => {
+              const active = selectedRoom?.id === room.id
+              return (
+                <button
+                  key={room.id}
+                  type="button"
+                  onClick={() => setSelectedRoom(room)}
+                  aria-pressed={active}
+                  className={`group text-left border rounded-xl overflow-hidden transition ${
+                    active
+                      ? 'border-blue-900 ring-2 ring-blue-100'
+                      : 'border-slate-200 hover:border-blue-300 hover:shadow-md'
+                  }`}
+                >
+                  <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+                    <img
+                      src={room.image}
+                      alt={`Kamar ${room.name}`}
+                      width="400"
+                      height="300"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {active && (
+                      <span className="absolute top-2 right-2 bg-blue-900 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                        ✓ Dipilih
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="font-semibold text-slate-800 text-sm mb-1">{room.name}</p>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {room.features.map((f) => (
+                        <span key={f} className="text-[11px] bg-blue-50 text-blue-800 px-2 py-0.5 rounded-full">
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-blue-700 font-semibold text-sm">
+                      Rp {room.price.toLocaleString('id-ID')} / malam
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
+          <p className="text-[11px] text-slate-400 mt-3">*Foto hanya ilustrasi.</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-6">
@@ -263,18 +303,34 @@ function Hotel() {
             {addons.map((addon) => (
               <label
                 key={addon.id}
-                className="flex items-center justify-between border border-slate-200 rounded-lg px-4 py-3 cursor-pointer hover:border-blue-300"
+                className={`flex items-center justify-between gap-3 border rounded-lg p-2 pr-4 cursor-pointer transition ${
+                  selectedAddons.includes(addon.id)
+                    ? 'border-blue-900 bg-blue-50/50'
+                    : 'border-slate-200 hover:border-blue-300'
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     checked={selectedAddons.includes(addon.id)}
                     onChange={() => toggleAddon(addon.id)}
-                    className="w-4 h-4 accent-blue-900"
+                    className="w-4 h-4 ml-2 accent-blue-900"
                   />
-                  <span className="text-sm text-slate-700">{addon.name}</span>
+                  <img
+                    src={addon.image}
+                    alt=""
+                    width="64"
+                    height="48"
+                    loading="lazy"
+                    decoding="async"
+                    className="w-16 h-12 rounded-md object-cover bg-slate-100"
+                  />
+                  <div>
+                    <p className="text-sm text-slate-700 font-medium">{addon.name}</p>
+                    <p className="text-xs text-slate-400">{addon.desc}</p>
+                  </div>
                 </div>
-                <span className="text-sm text-blue-700 font-medium">
+                <span className="text-sm text-blue-700 font-medium whitespace-nowrap">
                   Rp {addon.price.toLocaleString('id-ID')}
                 </span>
               </label>

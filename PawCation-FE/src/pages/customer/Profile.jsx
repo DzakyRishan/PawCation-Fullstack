@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../../lib/api'
+import { apiFetch, cachedGet, peekCache } from '../../lib/api'
 import { petTypeLabel } from '../../lib/pets'
 import PetAvatar from '../../components/PetAvatar'
 
 function Profile() {
   const navigate = useNavigate()
-  const [user, setUser] = useState(null)
-  const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(() => peekCache('/profile') || null)
+  const [orders, setOrders] = useState(() => peekCache('/orders') || [])
+  const [loading, setLoading] = useState(() => peekCache('/profile') === undefined)
   const [error, setError] = useState(null)
 
   const [petForm, setPetForm] = useState({ name: '', type: 'kucing', breed: '' })
@@ -20,8 +20,7 @@ function Profile() {
   const photoInputRefs = useRef({})
 
   const load = () => {
-    setLoading(true)
-    Promise.all([apiFetch('/profile'), apiFetch('/orders')])
+    Promise.all([cachedGet('/profile'), cachedGet('/orders')])
       .then(([profile, orderList]) => {
         setUser(profile)
         setOrders(orderList)

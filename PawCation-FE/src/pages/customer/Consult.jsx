@@ -1,28 +1,52 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../../lib/api'
+import { apiFetch, cachedGet, peekCache } from '../../lib/api'
 import { petTypeLabel } from '../../lib/pets'
 import PetAvatar from '../../components/PetAvatar'
 
 const packages = [
-  { id: 'basic', name: 'Basic Check-up', desc: 'Pemeriksaan umum, suhu, berat badan', price: 60000, emoji: '🩺' },
-  { id: 'vaccine', name: 'Vaksinasi', desc: 'Vaksin lengkap + kartu kesehatan', price: 150000, emoji: '💉' },
-  { id: 'dental', name: 'Perawatan Gigi', desc: 'Scaling + pemeriksaan gigi & gusi', price: 200000, emoji: '🦷' },
-  { id: 'full_body', name: 'Full Body Check', desc: 'Pemeriksaan menyeluruh + lab dasar', price: 350000, emoji: '🔬' },
+  {
+    id: 'basic',
+    name: 'Basic Check-up',
+    desc: 'Pemeriksaan umum, suhu, berat badan',
+    price: 60000,
+    image: '/images/health/basic.jpg',
+  },
+  {
+    id: 'vaccine',
+    name: 'Vaksinasi',
+    desc: 'Vaksin lengkap + kartu kesehatan',
+    price: 150000,
+    image: '/images/health/vaccine.jpg',
+  },
+  {
+    id: 'dental',
+    name: 'Perawatan Gigi',
+    desc: 'Scaling + pemeriksaan gigi & gusi',
+    price: 200000,
+    image: '/images/health/dental.jpg',
+  },
+  {
+    id: 'full_body',
+    name: 'Full Body Check',
+    desc: 'Pemeriksaan menyeluruh + lab dasar',
+    price: 350000,
+    image: '/images/health/full-body.jpg',
+  },
 ]
 
 const doctors = [
-  { id: 1, name: 'drg. Ayu Kartika', specialist: 'Umum & Vaksinasi', emoji: '👩‍⚕️' },
-  { id: 2, name: 'drh. Bagas Prasetyo', specialist: 'Gigi & Bedah Kecil', emoji: '👨‍⚕️' },
-  { id: 3, name: 'drh. Citra Wulandari', specialist: 'Internal & Lab', emoji: '👩‍⚕️' },
+  { id: 1, name: 'drh. Ayu Kartika', specialist: 'Umum & Vaksinasi', image: '/images/doctors/ayu.jpg' },
+  { id: 2, name: 'drh. Bagas Prasetyo', specialist: 'Gigi & Bedah Kecil', image: '/images/doctors/bagas.jpg' },
+  { id: 3, name: 'drh. Citra Wulandari', specialist: 'Internal & Lab', image: '/images/doctors/citra.jpg' },
 ]
 
 const timeSlots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
 
 function Consult() {
   const navigate = useNavigate()
-  const [pets, setPets] = useState([])
-  const [petsLoading, setPetsLoading] = useState(true)
+  const [pets, setPets] = useState(() => peekCache('/pets') || [])
+  const [petsLoading, setPetsLoading] = useState(() => peekCache('/pets') === undefined)
 
   const [selectedPet, setSelectedPet] = useState(null)
   const [selectedPackage, setSelectedPackage] = useState(null)
@@ -35,9 +59,9 @@ function Consult() {
   const [submitError, setSubmitError] = useState(null)
 
   useEffect(() => {
-    apiFetch('/pets')
+    cachedGet('/pets')
       .then(setPets)
-      .catch(() => setPets([]))
+      .catch(() => {})
       .finally(() => setPetsLoading(false))
   }, [])
 
@@ -114,36 +138,53 @@ function Consult() {
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
           <h2 className="font-semibold text-blue-900 mb-4">Pilih Paket Kesehatan</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {packages.map((pkg) => (
-              <button
-                key={pkg.id}
-                type="button"
-                onClick={() => setSelectedPackage(pkg)}
-                className={`text-left border rounded-xl overflow-hidden transition ${
-                  selectedPackage?.id === pkg.id
-                    ? 'border-blue-900 ring-2 ring-blue-100'
-                    : 'border-slate-200 hover:border-blue-300'
-                }`}
-              >
-                <div className="bg-blue-50 h-20 flex items-center justify-center text-3xl">
-                  {pkg.emoji}
-                </div>
-                <div className="p-3">
-                  <p className="font-semibold text-slate-800 text-sm mb-1">{pkg.name}</p>
-                  <p className="text-xs text-slate-500 mb-1">{pkg.desc}</p>
-                  <p className="text-blue-700 font-semibold text-sm">
-                    Rp {pkg.price.toLocaleString('id-ID')}
-                  </p>
-                </div>
-              </button>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {packages.map((pkg) => {
+              const active = selectedPackage?.id === pkg.id
+              return (
+                <button
+                  key={pkg.id}
+                  type="button"
+                  onClick={() => setSelectedPackage(pkg)}
+                  aria-pressed={active}
+                  className={`group text-left border rounded-xl overflow-hidden transition ${
+                    active
+                      ? 'border-blue-900 ring-2 ring-blue-100'
+                      : 'border-slate-200 hover:border-blue-300 hover:shadow-md'
+                  }`}
+                >
+                  <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
+                    <img
+                      src={pkg.image}
+                      alt={pkg.name}
+                      width="400"
+                      height="250"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {active && (
+                      <span className="absolute top-2 right-2 bg-blue-900 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                        ✓ Dipilih
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="font-semibold text-slate-800 text-sm mb-1">{pkg.name}</p>
+                    <p className="text-xs text-slate-500 mb-1">{pkg.desc}</p>
+                    <p className="text-blue-700 font-semibold text-sm">
+                      Rp {pkg.price.toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 mb-6">
           <h2 className="font-semibold text-blue-900 mb-4">Pilih Dokter</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {doctors.map((doc) => (
               <button
                 key={doc.id}
@@ -155,7 +196,15 @@ function Consult() {
                     : 'border-slate-200 hover:border-blue-300'
                 }`}
               >
-                <span className="text-3xl mb-2">{doc.emoji}</span>
+                <img
+                  src={doc.image}
+                  alt={doc.name}
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-16 h-16 rounded-full object-cover bg-slate-100 mb-2 border border-slate-200"
+                />
                 <p className="text-sm font-medium text-slate-800">{doc.name}</p>
                 <p className="text-xs text-slate-400 mt-1">{doc.specialist}</p>
               </button>
